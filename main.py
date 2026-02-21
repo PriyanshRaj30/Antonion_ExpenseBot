@@ -49,64 +49,29 @@ def save_transaction(user_id, data):
         return tx
 
 
+def delete_last_transaction(user_id):
+    with Session(engine) as session:
+        statement = (
+            select(Transaction)
+            .where(Transaction.user_id == user_id)
+            .order_by(Transaction.date.desc())
+        )
+
+        last_tx = session.exec(statement).first()
+
+        if not last_tx:
+            return None
+
+        session.delete(last_tx)
+        session.commit()
+
+        return last_tx
 # ----------------------
 # Detect if message is expense
 # ----------------------
 def is_expense_message(text):
     return any(char.isdigit() for char in text)
 
-
-# ----------------------
-# Expense Summary Logic
-# ----------------------
-# def get_summary(user_id, days=None, unnecessary_only=False):
-#     with Session(engine) as session:
-#         statement = select(Transaction).where(Transaction.user_id == user_id)
-
-#         if days:
-#             date_filter = datetime.utcnow() - timedelta(days=days)
-#             statement = statement.where(Transaction.date >= date_filter)
-
-#         if unnecessary_only:
-#             statement = statement.where(Transaction.is_unnecessary == True)
-
-#         results = session.exec(statement).all()
-
-#         total = sum(tx.amount for tx in results)
-
-#         category_breakdown = {}
-#         for tx in results:
-#             category_breakdown[tx.category] = category_breakdown.get(tx.category, 0) + tx.amount
-
-#         return total, category_breakdown
-
-
-
-# def send_message(chat_id, text):
-#     requests.post(TELEGRAM_API, json={
-#         "chat_id": chat_id,
-#         "text": text
-#     })
-
-# def build_summary_reply(summary, title, unnecessary_only=False):
-#     if summary['total'] == 0:
-#         return f"📊 {title}: No expenses recorded yet.\nStart adding some!"
-
-#     reply = f"📊 {title} ({summary['start_date']} to {summary['end_date']}):\n"
-#     reply += f"Total: ₹{summary['total']:.2f}\n"
-#     reply += f"Average Daily: ₹{summary['avg_daily']:.2f}\n"
-#     if summary['top_category']:
-#         reply += f"Top Category: {summary['top_category']} (₹{summary['breakdown'][summary['top_category']]:.2f})\n"
-#     reply += "\nCategory Breakdown:\n"
-#     for cat, amt in summary['breakdown'].items():
-#         reply += f"- {cat}: ₹{amt:.2f}\n"
-    
-#     if unnecessary_only:
-#         reply += "\nTip: Review these to cut back on waste!"
-#     else:
-#         reply += "\nKeep tracking to stay on budget!"
-    
-#     return reply
 
 def get_summary(user_id, period='month', unnecessary_only=False, start_date=None, end_date=None):
     """Fetch expense summary for a period."""
@@ -192,6 +157,21 @@ async def telegram_webhook(request: Request):
         reply = "Commands:\n- /start: Welcome\n- /week: Last week summary\n...\nOr just chat naturally!"
         send_message(chat_id, reply)
         return {"status": "help"}
+        
+    elif text == '/undo':
+        last_tx = delete_last_transaction(user_id)
+
+        if not last_tx:
+            send_message(chat_id, "⚠️ No transactions to undo.")
+            return {"status": "nothing to undo"}
+
+        reply = (
+            f"↩️ Undone: ₹{last_tx.amount} "
+            f"from {last_tx.category}"
+        )
+
+        send_message(chat_id, reply)
+        return {"status": "undone"}
 
 
     # EXPENSE ENTRY

@@ -11,3 +11,4 @@ class Transaction(SQLModel, table=True):
     description: str
     is_unnecessary: bool
     date: datetime = Field(default_factory=datetime.utcnow)
+
