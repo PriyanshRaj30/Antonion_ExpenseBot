@@ -193,44 +193,54 @@ async def telegram_webhook(request: Request):
     user_id = str(message["from"]["id"])
 
     if text == '/start':
-        print("PRINTPRINT")
-        reply = "Welcome! Track expenses by texting like '100 on food'. Ask summaries like 'last month expenses'. Use /help for more."
+        reply = "Hey 👋\n\n"
+        "Just send your expenses like:\n"
+        "100 on food\n"
+        "250 petrol\n\n"
+        "Or income like:\n"
+        "5000 salary\n"
+        "2000 freelance\n\n"
+        "You can also ask things like:\n"
+        "last month expenses\n"
+        "this year income\n\n"
+        "Type /help if you get stuck."
+
         send_message(chat_id, reply)
         return {"status": "start"}
     elif text == '/help':
-    reply = (
-        "🤖 *Money Tracker Bot Help*\n\n"
+        reply = (
+            "🤖 *Money Tracker Bot Help*\n\n"
 
-        "💰 *Add Income*\n"
-        "Just type naturally:\n"
-        "• 5000 salary\n"
-        "• Got 12000 freelance payment\n"
-        "• Received 2000 gift\n\n"
+            "💰 *Add Income*\n"
+            "Just type naturally:\n"
+            "• 5000 salary\n"
+            "• Got 12000 freelance payment\n"
+            "• Received 2000 gift\n\n"
 
-        "💸 *Add Expense*\n"
-        "Examples:\n"
-        "• 200 on food\n"
-        "• Spent 150 for petrol\n"
-        "• Paid 500 electricity bill\n\n"
+            "💸 *Add Expense*\n"
+            "Examples:\n"
+            "• 200 on food\n"
+            "• Spent 150 for petrol\n"
+            "• Paid 500 electricity bill\n\n"
 
-        "📊 *View Summaries*\n"
-        "• Last week expenses\n"
-        "• This month summary\n"
-        "• This year income\n"
-        "• Last year expenses\n"
-        "• From 2026-01-01 to 2026-01-31\n\n"
+            "📊 *View Summaries*\n"
+            "• Last week expenses\n"
+            "• This month summary\n"
+            "• This year income\n"
+            "• Last year expenses\n"
+            "• From 2026-01-01 to 2026-01-31\n\n"
 
-        "💸 *Unnecessary Spending*\n"
-        "• How much did I waste this month?\n"
-        "• Unnecessary expenses last year\n\n"
+            "💸 *Unnecessary Spending*\n"
+            "• How much did I waste this month?\n"
+            "• Unnecessary expenses last year\n\n"
 
-        "↩️ *Other Commands*\n"
-        "• /start – Welcome message\n"
-        "• /undo – Delete last transaction\n"
-        "• /help – Show this help message\n\n"
+            "↩️ *Other Commands*\n"
+            "• /start – Welcome message\n"
+            "• /undo – Delete last transaction\n"
+            "• /help – Show this help message\n\n"
 
-        "✨ Tip: You can just chat naturally. I understand context!"
-    )
+            "✨ Tip: You can just chat naturally. I understand context!"
+        )
 
         send_message(chat_id, reply)
         return {"status": "help"}
