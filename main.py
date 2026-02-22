@@ -193,7 +193,8 @@ async def telegram_webhook(request: Request):
     user_id = str(message["from"]["id"])
 
     if text == '/start':
-        reply = "Hey 👋\n\n"
+        reply = (
+        "Hey 👋\n\n"
         "Just send your expenses like:\n"
         "100 on food\n"
         "250 petrol\n\n"
@@ -204,6 +205,7 @@ async def telegram_webhook(request: Request):
         "last month expenses\n"
         "this year income\n\n"
         "Type /help if you get stuck."
+        )
 
         send_message(chat_id, reply)
         return {"status": "start"}
