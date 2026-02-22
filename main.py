@@ -3,6 +3,7 @@ from fastapi import FastAPI, Request
 from sqlmodel import Session, select
 from datetime import datetime, timedelta
 import requests
+import re
 from models import Transaction
 from database import engine, create_db
 from llm import categorize_expense, parse_summary_query
@@ -73,8 +74,35 @@ def delete_last_transaction(user_id):
 # Detect if message is expense
 # ----------------------
 def is_expense_message(text):
-    return any(char.isdigit() for char in text)
-
+    text_lower = text.lower()
+    
+    # Detect digits (e.g., "20", "100.50")
+    if re.search(r'\d+(\.\d+)?', text):
+        return True
+    
+    # Detect spelled-out numbers (basic list; expand as needed)
+    number_words = [
+        'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
+        'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen',
+        'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety',
+        'hundred', 'thousand', 'million', 'billion'
+    ]
+    # Check for number words, allowing compounds like "twenty five"
+    words = re.findall(r'\b\w+\b', text_lower)
+    if any(word in number_words for word in words):
+        return True
+    
+    # Detect currency symbols or words (e.g., "₹", "rupees", "$")
+    currency_indicators = ['₹', 'rs', 'rupee', 'rupees', 'dollar', 'dollars', '$', 'euro', 'euros', '£', 'pound', 'pounds']
+    if any(ind in text_lower for ind in currency_indicators):
+        return True
+    
+    # Exclude if it looks like a summary query (to avoid false positives)
+    summary_keywords = ['summary', 'report', 'show', 'waste', 'month', 'week', 'expenses', 'spent last']
+    if any(keyword in text_lower for keyword in summary_keywords):
+        return False
+    
+    return False
 
 
 def get_summary(user_id, period='month', unnecessary_only=False, start_date=None, end_date=None, tx_type=None):
@@ -217,6 +245,7 @@ async def telegram_webhook(request: Request):
             print("HERE7")
 
         except Exception as e:
+            print("HERE ??!?")
             print("Error:", e)
             send_message(chat_id, "❌ Could not understand. Try again.")
         return {"status": "recorded"}

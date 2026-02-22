@@ -4,7 +4,7 @@ import os
 import re
 from dotenv import load_dotenv
 load_dotenv()
-
+from datetime import datetime
 
 
 client = Groq(api_key=os.getenv("GROQ_KEY"))
@@ -47,14 +47,28 @@ def categorize_expense(text: str):
         
     except Exception as e:
         print("Invalid LLM Output: ",e)
-    return json.loads(content)
+    
+    decoder = json.JSONDecoder()
+
+    content = content.strip()
+
+    start = content.find('{')
+    if start != -1:
+        content, index = decoder.raw_decode(content[start:])
+        # print(content)
+    return content
 
 
 
 
 def parse_summary_query(message: str):
+    now = datetime.utcnow()
+    current_date = now.date().isoformat()
+
     prompt = f"""
         You are a query parser for an expense and income tracking bot.
+
+        Current date: {current_date}
 
         Analyze the user's message and determine if it's a request for a summary.
         If yes, extract the period, filters, and transaction type.
@@ -108,6 +122,7 @@ def parse_summary_query(message: str):
         parsed = json.loads(content)
         # print(f"THIS IS THE HERE2 {parsed}")
         # Validate and fallback
+        print("THIS IS THE TEST :", parsed)
         if parsed.get("is_summary") and parsed.get("period") == "custom":
             if not (parsed.get("start_date") and parsed.get("end_date")):
                 raise ValueError("Missing dates for custom")
