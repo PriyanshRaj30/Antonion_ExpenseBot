@@ -106,6 +106,7 @@ def parse_summary_query(message: str):
         - "5000 salary"                         → {{"is_summary": false}}
         - "Spent 100 on food"                   → {{"is_summary": false}}
         - "Hello"                               → {{"is_summary": false}}
+        - "This year expenses"                  → {{"is_summary": true, "period": "custom", "unnecessary_only": false, "tx_type": "expense", "start_date": "2026-01-01", "end_date": "2026-12-31"}}
 
         User message: "{message}"
         """
@@ -117,6 +118,7 @@ def parse_summary_query(message: str):
             temperature=0  # Low temp for consistency
         )
         content = response.choices[0].message.content.strip()
+        print("THIS IS THE CONTENTTT : ", content)
         # print(f'THIS IS THE HERE1 {content}')
         content = re.sub(r"```json|```", "", content).strip()
         parsed = json.loads(content)
