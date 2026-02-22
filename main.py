@@ -198,7 +198,40 @@ async def telegram_webhook(request: Request):
         send_message(chat_id, reply)
         return {"status": "start"}
     elif text == '/help':
-        reply = "Commands:\n- /start: Welcome\n- /week: Last week summary\n...\nOr just chat naturally!"
+    reply = (
+        "🤖 *Money Tracker Bot Help*\n\n"
+
+        "💰 *Add Income*\n"
+        "Just type naturally:\n"
+        "• 5000 salary\n"
+        "• Got 12000 freelance payment\n"
+        "• Received 2000 gift\n\n"
+
+        "💸 *Add Expense*\n"
+        "Examples:\n"
+        "• 200 on food\n"
+        "• Spent 150 for petrol\n"
+        "• Paid 500 electricity bill\n\n"
+
+        "📊 *View Summaries*\n"
+        "• Last week expenses\n"
+        "• This month summary\n"
+        "• This year income\n"
+        "• Last year expenses\n"
+        "• From 2026-01-01 to 2026-01-31\n\n"
+
+        "💸 *Unnecessary Spending*\n"
+        "• How much did I waste this month?\n"
+        "• Unnecessary expenses last year\n\n"
+
+        "↩️ *Other Commands*\n"
+        "• /start – Welcome message\n"
+        "• /undo – Delete last transaction\n"
+        "• /help – Show this help message\n\n"
+
+        "✨ Tip: You can just chat naturally. I understand context!"
+    )
+
         send_message(chat_id, reply)
         return {"status": "help"}
         
@@ -325,5 +358,20 @@ async def telegram_webhook(request: Request):
         return {"status": "error"}
 
     # FALLBACK (after try-except)
-    send_message(chat_id, "Send an expense or ask about last week / this month / waste.")
+    send_message(
+        chat_id,
+        "🤔 I didn’t understand that.\n\n"
+        "💰 Add income like:\n"
+        "• 5000 salary\n"
+        "• Received 2000\n\n"
+        "💸 Add expense like:\n"
+        "• 200 on food\n"
+        "• Paid 150 for petrol\n\n"
+        "📊 Ask for summary like:\n"
+        "• Last week expenses\n"
+        "• This month summary\n"
+        "• This year income\n"
+        "• From 2026-01-01 to 2026-01-31\n\n"
+        "Type /help for full guide."
+    )
     return {"status": "default"}
