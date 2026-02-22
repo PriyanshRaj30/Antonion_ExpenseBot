@@ -25,24 +25,26 @@ def send_message(chat_id, text):
     })
 
 def build_summary_reply(summary, title, unnecessary_only=False):
-    if summary['total'] == 0:
-        return f"📊 {title}: No expenses recorded yet.\nStart adding some!"
+    lines = [f"📊 *{title} Summary*", f"🗓 {summary['start_date']} → {summary['end_date']}", ""]
 
-    reply = f"📊 {title} ({summary['start_date']} to {summary['end_date']}):\n"
-    reply += f"Total: ₹{summary['total']:.2f}\n"
-    reply += f"Average Daily: ₹{summary['avg_daily']:.2f}\n"
-    if summary['top_category']:
-        reply += f"Top Category: {summary['top_category']} (₹{summary['breakdown'][summary['top_category']]:.2f})\n"
-    reply += "\nCategory Breakdown:\n"
+    if not unnecessary_only:
+        lines.append(f"💰 Income:   ₹{summary['income']:.0f}")
+        lines.append(f"💸 Expenses: ₹{summary['expenses']:.0f}")
+        net = summary['net']
+        net_emoji = "✅" if net >= 0 else "🔴"
+        lines.append(f"{net_emoji} Net:      ₹{net:.0f}")
+        lines.append("")
+
+    lines.append("📂 *Breakdown:*")
     for cat, amt in summary['breakdown'].items():
-        reply += f"- {cat}: ₹{amt:.2f}\n"
-    
-    if unnecessary_only:
-        reply += "\nTip: Review these to cut back on waste!"
-    else:
-        reply += "\nKeep tracking to stay on budget!"
-    
-    return reply
+        lines.append(f"  • {cat}: ₹{amt:.0f}")
+
+    if summary.get('top_category'):
+        lines.append(f"\n🏆 Top category: {summary['top_category']}")
+    if not unnecessary_only:
+        lines.append(f"📈 Avg daily spend: ₹{summary['avg_daily']:.0f}")
+
+    return "\n".join(lines)
 
 def get_summary(user_id, period='month', unnecessary_only=False, start_date=None, end_date=None):
     """Fetch expense summary for a period."""

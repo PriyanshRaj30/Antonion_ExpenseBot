@@ -10,5 +10,7 @@ class Transaction(SQLModel, table=True):
     category: str
     description: str
     is_unnecessary: bool
+    tx_type: str = Field(default="expense") 
+
     date: datetime = Field(default_factory=datetime.utcnow)
 

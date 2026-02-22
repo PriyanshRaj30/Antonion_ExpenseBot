@@ -31,6 +31,8 @@ create_db()
 # ----------------------
 
 
+
+
 # ----------------------
 # Save Transaction
 # ----------------------
@@ -41,7 +43,8 @@ def save_transaction(user_id, data):
             amount=data["amount"],
             category=data["category"],
             description=data["description"],
-            is_unnecessary=data["is_unnecessary"]
+            is_unnecessary=data["is_unnecessary"],
+            tx_type=data.get("tx_type", "expense")  
         )
         session.add(tx)
         session.commit()
@@ -73,7 +76,8 @@ def is_expense_message(text):
     return any(char.isdigit() for char in text)
 
 
-def get_summary(user_id, period='month', unnecessary_only=False, start_date=None, end_date=None):
+
+def get_summary(user_id, period='month', unnecessary_only=False, start_date=None, end_date=None, tx_type=None):
     """Fetch expense summary for a period."""
     now = datetime.utcnow()
     
@@ -109,22 +113,34 @@ def get_summary(user_id, period='month', unnecessary_only=False, start_date=None
         statement = select(Transaction).where(Transaction.user_id == user_id)
         statement = statement.where(Transaction.date >= date_filter_start)
         statement = statement.where(Transaction.date < date_filter_end)
+
         if unnecessary_only:
             statement = statement.where(Transaction.is_unnecessary == True)
-        
+        if tx_type:
+            statement = statement.where(Transaction.tx_type == tx_type)  # ← filter
+
         results = session.exec(statement).all()
-        total = sum(tx.amount for tx in results)
+
+        expenses = sum(tx.amount for tx in results if tx.tx_type == "expense")
+        income   = sum(tx.amount for tx in results if tx.tx_type == "income")
+        total    = sum(tx.amount for tx in results)
+
         category_breakdown = {}
         for tx in results:
             category_breakdown[tx.category] = category_breakdown.get(tx.category, 0) + tx.amount
-        
-        # Add insights: average daily spend, top category
+
         days_in_period = (date_filter_end - date_filter_start).days
-        avg_daily = total / days_in_period if days_in_period > 0 else 0
-        top_category = max(category_breakdown, key=category_breakdown.get) if category_breakdown else None
-        
+        avg_daily = expenses / days_in_period if days_in_period > 0 else 0
+        top_category = max(
+            (k for k in category_breakdown),
+            key=category_breakdown.get
+        ) if category_breakdown else None
+
         return {
             'total': total,
+            'expenses': expenses,       
+            'income': income,           
+            'net': income - expenses,   
             'breakdown': category_breakdown,
             'avg_daily': avg_daily,
             'top_category': top_category,
@@ -174,21 +190,36 @@ async def telegram_webhook(request: Request):
         return {"status": "undone"}
 
 
-    # EXPENSE ENTRY
+    # EXPENSE / INCOME ENTRY
     if is_expense_message(text):
+        print(text)
         try:
+            # print("HERE1")
             parsed = categorize_expense(text)
+            # print("HERE2")
             tx = save_transaction(user_id, parsed)
-            reply = (
-                f"✅ ₹{tx.amount} added under {tx.category}\n"
-                f"Marked as {'Unnecessary' if tx.is_unnecessary else 'Essential'}"
-            )
+            # print("HERE3")
+
+            if tx.tx_type == "income":
+                print("HERE4")
+                reply = (
+                    f"💰 ₹{tx.amount} income recorded under {tx.category}\n"
+                    f"📝 {tx.description}"
+                )
+            else:
+                print("HERE5")
+                reply = (
+                    f"✅ ₹{tx.amount} added under {tx.category}\n"
+                    f"Marked as {'Unnecessary' if tx.is_unnecessary else 'Essential'}"
+                )
+            print("HERE6")
             send_message(chat_id, reply)
+            print("HERE7")
 
         except Exception as e:
-            print("Error predicting if it is a expense : ",e)
-            send_message(chat_id, "❌ Could not understand expense. Try again.")
-        return {"status": "expense recorded"}
+            print("Error:", e)
+            send_message(chat_id, "❌ Could not understand. Try again.")
+        return {"status": "recorded"}
 
     # QUERY SECTION
     text_lower = text.lower()
@@ -237,7 +268,10 @@ async def telegram_webhook(request: Request):
                 period=period_type, 
                 unnecessary_only=unnecessary_only, 
                 start_date=start_date if period_type == 'custom' else None,
-                end_date=end_date if period_type == 'custom' else None
+                end_date=end_date if period_type == 'custom' else None,
+                tx_type=parsed.get("tx_type") 
+
+
             )
             print("THIS WILL NOT")
             
