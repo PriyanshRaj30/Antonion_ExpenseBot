@@ -1,6 +1,8 @@
 fastapi
 uvicorn
-sqlmodel
 groq
 python-dotenv
+sqlmodel
+sqlalchemy
 requests
+python-dateutil
