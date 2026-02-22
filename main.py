@@ -360,7 +360,7 @@ async def telegram_webhook(request: Request):
     # FALLBACK (after try-except)
     send_message(
         chat_id,
-        "🤔 I didn’t understand that.\n\n"
+        "🤔 I didn't understand that.\n\n"
         "💰 Add income like:\n"
         "• 5000 salary\n"
         "• Received 2000\n\n"
