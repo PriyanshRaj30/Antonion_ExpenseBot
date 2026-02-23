@@ -41,6 +41,7 @@ def categorize_expense(text: str):
         temperature=0
     )
 
+
     try:
         content = response.choices[0].message.content.strip()
         content = re.sub(r"```json|```", "", content).strip()
@@ -118,13 +119,8 @@ def parse_summary_query(message: str):
             temperature=0  # Low temp for consistency
         )
         content = response.choices[0].message.content.strip()
-        print("THIS IS THE CONTENTTT : ", content)
-        # print(f'THIS IS THE HERE1 {content}')
         content = re.sub(r"```json|```", "", content).strip()
         parsed = json.loads(content)
-        # print(f"THIS IS THE HERE2 {parsed}")
-        # Validate and fallback
-        print("THIS IS THE TEST :", parsed)
         if parsed.get("is_summary") and parsed.get("period") == "custom":
             if not (parsed.get("start_date") and parsed.get("end_date")):
                 raise ValueError("Missing dates for custom")

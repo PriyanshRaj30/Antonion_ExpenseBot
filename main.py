@@ -188,7 +188,6 @@ async def telegram_webhook(request: Request):
         return {"status": "ignored"}
 
     text = message.get("text", "")
-    print(f"text : {text}")
     chat_id = message["chat"]["id"]
     user_id = str(message["from"]["id"])
 
@@ -265,63 +264,28 @@ async def telegram_webhook(request: Request):
 
     # EXPENSE / INCOME ENTRY
     if is_expense_message(text):
-        print(text)
         try:
-            # print("HERE1")
             parsed = categorize_expense(text)
-            # print("HERE2")
             tx = save_transaction(user_id, parsed)
-            # print("HERE3")
 
             if tx.tx_type == "income":
-                print("HERE4")
                 reply = (
                     f"💰 ₹{tx.amount} income recorded under {tx.category}\n"
                     f"📝 {tx.description}"
                 )
             else:
-                print("HERE5")
                 reply = (
                     f"✅ ₹{tx.amount} added under {tx.category}\n"
                     f"Marked as {'Unnecessary' if tx.is_unnecessary else 'Essential'}"
                 )
-            print("HERE6")
             send_message(chat_id, reply)
-            print("HERE7")
 
         except Exception as e:
-            print("HERE ??!?")
-            print("Error:", e)
             send_message(chat_id, "❌ Could not understand. Try again.")
         return {"status": "recorded"}
 
     # QUERY SECTION
     text_lower = text.lower()
-    print("THIS IS THE LOWER TEXT", text_lower)
-
-    # if "last week" in text_lower:
-    #     total, breakdown = get_summary(user_id, days=7)
-    #     reply = f"📊 Last Week Total: ₹{total}\n"
-    #     for cat, amt in breakdown.items():
-    #         reply += f"- {cat}: ₹{amt}\n"
-    #     send_message(chat_id, reply)
-    #     return {"status": "summary sent"}
-
-    # if "this month" in text_lower:
-    #     total, breakdown = get_summary(user_id, days=30)
-    #     reply = f"📊 This Month Total: ₹{total}\n"
-    #     for cat, amt in breakdown.items():
-    #         reply += f"- {cat}: ₹{amt}\n"
-    #     send_message(chat_id, reply)
-    #     return {"status": "summary sent"}
-
-    # if "waste" in text_lower:
-    #     total, breakdown = get_summary(user_id, days=30, unnecessary_only=True)
-    #     reply = f"💸 Wasted This Month: ₹{total}\n"
-    #     for cat, amt in breakdown.items():
-    #         reply += f"- {cat}: ₹{amt}\n"
-    #     send_message(chat_id, reply)
-    #     return {"status": "waste summary"}
 
 
     try:
@@ -332,11 +296,8 @@ async def telegram_webhook(request: Request):
             start_date = parsed.get("start_date")
             end_date = parsed.get("end_date")
             
-            print(f"THIS IS THE PERIOD : {period_type}")
-            
             if period_type == 'custom' and (start_date is None or end_date is None):
                 raise ValueError("Missing dates for custom period")
-            print("THIS WILL GET PRINT ")
             summary = get_summary(
                 user_id, 
                 period=period_type, 
@@ -344,10 +305,7 @@ async def telegram_webhook(request: Request):
                 start_date=start_date if period_type == 'custom' else None,
                 end_date=end_date if period_type == 'custom' else None,
                 tx_type=parsed.get("tx_type") 
-
-
             )
-            print("THIS WILL NOT")
             
             title_base = {
                 'last_week': 'Last Week',
@@ -363,9 +321,6 @@ async def telegram_webhook(request: Request):
             send_message(chat_id, reply)
             return {"status": "summary sent"}
     except Exception as e:
-        print("ERROR HERE")
-        print(e)
-
         send_message(chat_id, "❌ Could not generate summary. Try clearer phrasing like 'last month expenses' or check /help.")
         return {"status": "error"}
 
